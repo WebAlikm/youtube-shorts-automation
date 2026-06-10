@@ -57,7 +57,7 @@ the uploaded object paths through `STORAGE_PUBLIC_URL`.
 1. Create a Google Cloud project.
 2. Enable YouTube Data API v3.
 3. Configure the OAuth consent screen.
-4. Create a Desktop OAuth client.
+4. Create a Desktop OAuth client, or configure the Web client redirect below.
 5. Copy `.env.example` to `.env` and set the client ID and secret.
 6. Run `npm install`, then `npm run youtube:auth`.
 7. Approve the target YouTube channel and save the printed refresh token.
@@ -110,3 +110,18 @@ npm start
 ```
 
 Do not commit `.env`, OAuth tokens, service-account JSON, or API keys.
+
+## Import Existing Google Credentials
+
+To populate a local `.env` without copying private keys manually:
+
+```bash
+npm run configure:local -- /path/to/service-account.json /path/to/oauth-client.json <fish-voice-id>
+```
+
+For a Web application OAuth client, add this exact authorized redirect URI in
+Google Cloud before running `npm run youtube:auth`:
+
+```text
+http://localhost:3000/oauth2callback
+```
