@@ -23,30 +23,20 @@ jobs:
           node-version: 22
       - name: Check required configuration
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FISH_AUDIO_API_KEY: ${{ secrets.FISH_AUDIO_API_KEY }}
           FISH_VOICE_ID: ${{ vars.FISH_VOICE_ID }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          CREATOMATE_API_KEY: ${{ secrets.CREATOMATE_API_KEY }}
-          CREATOMATE_TEMPLATE_ID: ${{ vars.CREATOMATE_TEMPLATE_ID }}
           GOOGLE_SHEET_ID: ${{ vars.GOOGLE_SHEET_ID }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
-          STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
-          STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
-          STORAGE_BUCKET: ${{ vars.STORAGE_BUCKET }}
-          STORAGE_PUBLIC_URL: ${{ vars.STORAGE_PUBLIC_URL }}
         run: |
           missing=0
           for name in \
-            ANTHROPIC_API_KEY FISH_AUDIO_API_KEY FISH_VOICE_ID OPENAI_API_KEY \
-            CREATOMATE_API_KEY CREATOMATE_TEMPLATE_ID GOOGLE_SHEET_ID \
+            FISH_AUDIO_API_KEY FISH_VOICE_ID OPENAI_API_KEY GOOGLE_SHEET_ID \
             GOOGLE_SERVICE_ACCOUNT_JSON YOUTUBE_CLIENT_ID YOUTUBE_CLIENT_SECRET \
-            YOUTUBE_REFRESH_TOKEN STORAGE_ENDPOINT STORAGE_ACCESS_KEY \
-            STORAGE_SECRET_KEY STORAGE_BUCKET STORAGE_PUBLIC_URL
+            YOUTUBE_REFRESH_TOKEN
           do
             if [ -z "${!name}" ]; then
               echo "::error::Missing GitHub secret or variable: $name"
@@ -60,14 +50,11 @@ jobs:
       - run: npm run build
       - run: npm start
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || 'claude-sonnet-4-5' }}
           FISH_AUDIO_API_KEY: ${{ secrets.FISH_AUDIO_API_KEY }}
           FISH_VOICE_ID: ${{ vars.FISH_VOICE_ID }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_SCRIPT_MODEL: ${{ vars.OPENAI_SCRIPT_MODEL || 'gpt-5.5' }}
           OPENAI_IMAGE_MODEL: ${{ vars.OPENAI_IMAGE_MODEL || 'gpt-image-2' }}
-          CREATOMATE_API_KEY: ${{ secrets.CREATOMATE_API_KEY }}
-          CREATOMATE_TEMPLATE_ID: ${{ vars.CREATOMATE_TEMPLATE_ID }}
           GOOGLE_SHEET_ID: ${{ vars.GOOGLE_SHEET_ID }}
           GOOGLE_SHEET_TAB: ${{ vars.GOOGLE_SHEET_TAB || 'Queue' }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
@@ -77,10 +64,4 @@ jobs:
           YOUTUBE_REDIRECT_URI: ${{ vars.YOUTUBE_REDIRECT_URI || 'http://localhost:3000/oauth2callback' }}
           YOUTUBE_PRIVACY_STATUS: ${{ vars.YOUTUBE_PRIVACY_STATUS || 'private' }}
           YOUTUBE_CATEGORY_ID: ${{ vars.YOUTUBE_CATEGORY_ID || '28' }}
-          STORAGE_REGION: ${{ vars.STORAGE_REGION || 'auto' }}
-          STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
-          STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
-          STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
-          STORAGE_BUCKET: ${{ vars.STORAGE_BUCKET }}
-          STORAGE_PUBLIC_URL: ${{ vars.STORAGE_PUBLIC_URL }}
           MAX_JOBS_PER_RUN: ${{ vars.MAX_JOBS_PER_RUN || '1' }}
