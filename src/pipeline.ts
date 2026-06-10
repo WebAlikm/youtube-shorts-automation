@@ -1,18 +1,12 @@
 import { rm } from "node:fs/promises";
-import { createVideoPlan } from "./providers/claude.js";
-import { renderVideo } from "./providers/creatomate.js";
+import { renderVideo } from "./providers/ffmpeg.js";
 import { synthesizeSpeech } from "./providers/fish.js";
 import { generateImage } from "./providers/images.js";
+import { createVideoPlan } from "./providers/openai.js";
 import { updateRow } from "./providers/sheets.js";
-import { uploadAsset } from "./providers/storage.js";
 import { uploadVideo } from "./providers/youtube.js";
 import { QueueRow, TimedScene, queueStatus } from "./types.js";
-import {
-  download,
-  ensureTmp,
-  mediaDuration,
-  safeKey,
-} from "./utils.js";
+import { ensureTmp, mediaDuration, safeKey } from "./utils.js";
 
 function sceneDurations(narration: string[], totalDuration: number) {
   const weights = narration.map((text) => Math.max(1, text.trim().split(/\s+/).length));
@@ -47,40 +41,29 @@ export async function processRow(row: QueueRow) {
       duration,
     );
 
-    const audioUrl = await uploadAsset(
-      audioPath,
-      `${jobKey}/narration.mp3`,
-      "audio/mpeg",
-    );
-
     const timedScenes: TimedScene[] = [];
     for (const [index, scene] of plan.scenes.entries()) {
       const imagePath = `${jobDir}/scene-${index + 1}.png`;
       await generateImage(scene.imagePrompt, imagePath);
-      const imageUrl = await uploadAsset(
-        imagePath,
-        `${jobKey}/scene-${index + 1}.png`,
-        "image/png",
-      );
       const timing = timings[index];
       if (!timing) throw new Error(`Missing timing for scene ${index + 1}`);
-      timedScenes.push({ ...scene, imageUrl, ...timing });
+      timedScenes.push({ ...scene, imagePath, ...timing });
     }
 
-    const renderUrl = await renderVideo(audioUrl, timedScenes);
+    await renderVideo(audioPath, timedScenes, videoPath);
     await updateRow(row.rowNumber, {
       status: queueStatus.rendered,
       script: narration,
       title: plan.title,
       description: plan.description,
-      videoUrl: renderUrl,
+      videoUrl: "",
       error: "",
     });
 
-    await download(renderUrl, videoPath);
     const youtubeId = await uploadVideo(videoPath, plan);
     await updateRow(row.rowNumber, {
       status: queueStatus.uploaded,
+      videoUrl: `https://youtu.be/${youtubeId}`,
       youtubeId,
       error: "",
     });
