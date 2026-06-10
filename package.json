@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "start": "tsx src/index.ts",
+    "configure:local": "node scripts/configure-local.mjs",
     "youtube:auth": "tsx scripts/youtube-auth.ts"
   },
   "dependencies": {
