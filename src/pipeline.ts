@@ -5,8 +5,8 @@ import { generateImage } from "./providers/images.js";
 import { createVideoPlan } from "./providers/openai.js";
 import { updateRow } from "./providers/sheets.js";
 import { uploadVideo } from "./providers/youtube.js";
-import { QueueRow, TimedScene, queueStatus } from "./types.js";
-import { ensureTmp, mediaDuration, safeKey } from "./utils.js";
+import { QueueRow, TimedScene, VideoPlan, queueStatus } from "./types.js";
+import { download, ensureTmp, mediaDuration, safeKey } from "./utils.js";
 
 function sceneDurations(narration: string[], totalDuration: number) {
   const weights = narration.map((text) => Math.max(1, text.trim().split(/\s+/).length));
@@ -24,6 +24,39 @@ function sceneDurations(narration: string[], totalDuration: number) {
   });
 }
 
+function list(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function manualPlan(row: QueueRow) {
+  const narration = list(row.script);
+  const imageUrls = list(row.imageUrls);
+  if (!narration.length || !imageUrls.length) return null;
+  if (narration.length !== imageUrls.length) {
+    throw new Error(
+      `Manual mode requires one script line per image URL. Found ${narration.length} script lines and ${imageUrls.length} image URLs.`,
+    );
+  }
+
+  const plan: VideoPlan = {
+    title: row.title || row.topic.slice(0, 100),
+    description: row.description || row.topic,
+    tags: row.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .slice(0, 15),
+    scenes: narration.map((text, index) => ({
+      narration: text,
+      imagePrompt: `Manual image ${index + 1}`,
+    })),
+  };
+  return { plan, imageUrls };
+}
+
 export async function processRow(row: QueueRow) {
   await ensureTmp();
   const jobKey = `${row.rowNumber}-${Date.now()}-${safeKey(row.topic)}`;
@@ -32,7 +65,8 @@ export async function processRow(row: QueueRow) {
   const videoPath = `${jobDir}/video.mp4`;
 
   try {
-    const plan = await createVideoPlan(row.topic, row.instructions);
+    const manual = manualPlan(row);
+    const plan = manual?.plan ?? (await createVideoPlan(row.topic, row.instructions));
     const narration = plan.scenes.map((scene) => scene.narration).join(" ");
     await synthesizeSpeech(narration, audioPath);
     const duration = await mediaDuration(audioPath);
@@ -44,7 +78,12 @@ export async function processRow(row: QueueRow) {
     const timedScenes: TimedScene[] = [];
     for (const [index, scene] of plan.scenes.entries()) {
       const imagePath = `${jobDir}/scene-${index + 1}.png`;
-      await generateImage(scene.imagePrompt, imagePath);
+      const imageUrl = manual?.imageUrls[index];
+      if (imageUrl) {
+        await download(imageUrl, imagePath);
+      } else {
+        await generateImage(scene.imagePrompt, imagePath);
+      }
       const timing = timings[index];
       if (!timing) throw new Error(`Missing timing for scene ${index + 1}`);
       timedScenes.push({ ...scene, imagePath, ...timing });
