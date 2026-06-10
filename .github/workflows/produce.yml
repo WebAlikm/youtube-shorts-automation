@@ -25,7 +25,6 @@ jobs:
         env:
           FISH_AUDIO_API_KEY: ${{ secrets.FISH_AUDIO_API_KEY }}
           FISH_VOICE_ID: ${{ vars.FISH_VOICE_ID }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_SHEET_ID: ${{ vars.GOOGLE_SHEET_ID }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
@@ -34,7 +33,7 @@ jobs:
         run: |
           missing=0
           for name in \
-            FISH_AUDIO_API_KEY FISH_VOICE_ID OPENAI_API_KEY GOOGLE_SHEET_ID \
+            FISH_AUDIO_API_KEY FISH_VOICE_ID GOOGLE_SHEET_ID \
             GOOGLE_SERVICE_ACCOUNT_JSON YOUTUBE_CLIENT_ID YOUTUBE_CLIENT_SECRET \
             YOUTUBE_REFRESH_TOKEN
           do
