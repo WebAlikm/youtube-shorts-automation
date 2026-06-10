@@ -13,6 +13,8 @@ const HEADERS = [
   "youtube_id",
   "error",
   "updated_at",
+  "image_urls",
+  "tags",
 ];
 
 function sheetsClient() {
@@ -27,26 +29,19 @@ function sheetsClient() {
 
 export async function ensureSheet() {
   const sheets = sheetsClient();
-  const range = `${config.GOOGLE_SHEET_TAB}!A1:J1`;
-  const result = await sheets.spreadsheets.values.get({
+  await sheets.spreadsheets.values.update({
     spreadsheetId: config.GOOGLE_SHEET_ID,
-    range,
+    range: `${config.GOOGLE_SHEET_TAB}!A1:L1`,
+    valueInputOption: "RAW",
+    requestBody: { values: [HEADERS] },
   });
-  if (!result.data.values?.length) {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: config.GOOGLE_SHEET_ID,
-      range,
-      valueInputOption: "RAW",
-      requestBody: { values: [HEADERS] },
-    });
-  }
 }
 
 export async function getReadyRows(): Promise<QueueRow[]> {
   const sheets = sheetsClient();
   const result = await sheets.spreadsheets.values.get({
     spreadsheetId: config.GOOGLE_SHEET_ID,
-    range: `${config.GOOGLE_SHEET_TAB}!A2:J`,
+    range: `${config.GOOGLE_SHEET_TAB}!A2:L`,
   });
 
   return (result.data.values ?? [])
@@ -55,7 +50,12 @@ export async function getReadyRows(): Promise<QueueRow[]> {
       topic: values[0] ?? "",
       instructions: values[1] ?? "",
       status: values[2] ?? "",
+      script: values[3] ?? "",
+      title: values[4] ?? "",
+      description: values[5] ?? "",
       youtubeId: values[7] ?? "",
+      imageUrls: values[10] ?? "",
+      tags: values[11] ?? "",
     }))
     .filter(
       (row) =>
@@ -74,22 +74,19 @@ export async function claimRow(row: QueueRow) {
     range: cell,
   });
   if (current.data.values?.[0]?.[0] !== queueStatus.ready) return false;
-  await sheets.spreadsheets.values.update({
+  await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId: config.GOOGLE_SHEET_ID,
-    range: `${config.GOOGLE_SHEET_TAB}!C${row.rowNumber}:J${row.rowNumber}`,
-    valueInputOption: "RAW",
     requestBody: {
-      values: [
-        [
-          queueStatus.processing,
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          new Date().toISOString(),
-        ],
+      valueInputOption: "RAW",
+      data: [
+        {
+          range: `${config.GOOGLE_SHEET_TAB}!C${row.rowNumber}`,
+          values: [[queueStatus.processing]],
+        },
+        {
+          range: `${config.GOOGLE_SHEET_TAB}!I${row.rowNumber}:J${row.rowNumber}`,
+          values: [["", new Date().toISOString()]],
+        },
       ],
     },
   });
