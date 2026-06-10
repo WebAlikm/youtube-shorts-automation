@@ -4,9 +4,9 @@ Automates this pipeline:
 
 ```text
 Google Sheets queue
-  -> OpenAI script and scene plan
+  -> OpenAI plan or manually supplied script and images
   -> Fish Audio narration
-  -> OpenAI scene images
+  -> OpenAI scene images or supplied image URLs
   -> FFmpeg vertical MP4
   -> YouTube upload
   -> Sheet status and URL update
@@ -19,11 +19,28 @@ The GitHub Actions workflow runs hourly and processes rows whose `status` is
 
 Create a tab called `Queue`. The worker creates this header automatically:
 
-| topic | instructions | status | script | title | description | video_url | youtube_id | error | updated_at |
-|---|---|---|---|---|---|---|---|---|---|
+| topic | instructions | status | script | title | description | video_url | youtube_id | error | updated_at | image_urls | tags |
+|---|---|---|---|---|---|---|---|---|---|---|---|
 
 Add a topic and set `status` to `READY`. Share the Sheet with the service
 account email as an editor.
+
+### No-OpenAI Manual Mode
+
+To run without OpenAI billing:
+
+1. Put one narration scene on each line of `script`.
+2. Put one direct, publicly accessible image URL on each line of `image_urls`.
+3. Use the same number of script lines and image URLs.
+4. Fill `title`, `description`, and optional comma-separated `tags`.
+5. Set `status` to `READY`.
+
+The worker downloads the supplied images, generates narration with Fish Audio,
+renders with FFmpeg, and uploads to YouTube. `OPENAI_API_KEY` is not required
+for these rows.
+
+If either `script` or `image_urls` is missing, automatic mode is used and
+OpenAI billing is required for both script planning and image generation.
 
 Statuses:
 
@@ -57,11 +74,16 @@ Add these repository **Secrets**:
 
 ```text
 FISH_AUDIO_API_KEY
-OPENAI_API_KEY
 GOOGLE_SERVICE_ACCOUNT_JSON
 YOUTUBE_CLIENT_ID
 YOUTUBE_CLIENT_SECRET
 YOUTUBE_REFRESH_TOKEN
+```
+
+Optional secret for automatic script and image generation:
+
+```text
+OPENAI_API_KEY
 ```
 
 Add these repository **Variables**:
