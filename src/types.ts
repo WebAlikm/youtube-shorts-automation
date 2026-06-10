@@ -33,7 +33,7 @@ export interface QueueRow {
 export interface TimedScene {
   narration: string;
   imagePrompt: string;
-  imageUrl: string;
+  imagePath: string;
   start: number;
   duration: number;
 }
