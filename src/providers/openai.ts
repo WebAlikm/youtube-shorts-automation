@@ -53,6 +53,12 @@ export async function createVideoPlan(
   topic: string,
   instructions: string,
 ): Promise<VideoPlan> {
+  if (!config.OPENAI_API_KEY) {
+    throw new Error(
+      "OPENAI_API_KEY is required for automatic mode. To run without OpenAI, fill script and image_urls in the Sheet.",
+    );
+  }
+
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
