@@ -27,7 +27,12 @@ export interface QueueRow {
   topic: string;
   instructions: string;
   status: string;
+  script: string;
+  title: string;
+  description: string;
   youtubeId: string;
+  imageUrls: string;
+  tags: string;
 }
 
 export interface TimedScene {
