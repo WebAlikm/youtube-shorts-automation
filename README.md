@@ -4,11 +4,10 @@ Automates this pipeline:
 
 ```text
 Google Sheets queue
-  -> Claude script and scene plan
+  -> OpenAI script and scene plan
   -> Fish Audio narration
   -> OpenAI scene images
-  -> S3-compatible public asset storage
-  -> Creatomate vertical MP4
+  -> FFmpeg vertical MP4
   -> YouTube upload
   -> Sheet status and URL update
 ```
@@ -30,27 +29,15 @@ Statuses:
 
 - `READY`: waiting
 - `PROCESSING`: claimed by a worker
-- `RENDERED`: Creatomate completed
+- `RENDERED`: FFmpeg completed
 - `UPLOADED`: YouTube completed
 - `FAILED`: inspect the `error` cell, fix the cause, then set back to `READY`
 
-## Creatomate Template
+## Video Rendering
 
-Create a 1080x1920 template with:
-
-- one audio element named `Audio`
-- image elements named `Image-1` through `Image-12`
-- each image set to fill the vertical canvas
-- unused image elements hidden or placed after the composition
-
-The worker modifies each image's `source`, `time`, and `duration`. Keep those
-properties dynamic in the template.
-
-## Public Storage
-
-Creatomate must be able to fetch the generated assets. Configure an
-S3-compatible bucket such as Cloudflare R2, AWS S3, or Backblaze B2 and expose
-the uploaded object paths through `STORAGE_PUBLIC_URL`.
+The GitHub Actions runner installs FFmpeg and renders the generated images and
+narration directly into a 1080x1920 MP4. Creatomate and public asset storage
+are not required.
 
 ## YouTube OAuth
 
@@ -69,34 +56,25 @@ Service accounts cannot upload to normal YouTube channels.
 Add these repository **Secrets**:
 
 ```text
-ANTHROPIC_API_KEY
 FISH_AUDIO_API_KEY
 OPENAI_API_KEY
-CREATOMATE_API_KEY
 GOOGLE_SERVICE_ACCOUNT_JSON
 YOUTUBE_CLIENT_ID
 YOUTUBE_CLIENT_SECRET
 YOUTUBE_REFRESH_TOKEN
-STORAGE_ACCESS_KEY
-STORAGE_SECRET_KEY
 ```
 
 Add these repository **Variables**:
 
 ```text
-ANTHROPIC_MODEL=claude-sonnet-4-5
 FISH_VOICE_ID=<Fish Audio reference ID>
+OPENAI_SCRIPT_MODEL=gpt-5.5
 OPENAI_IMAGE_MODEL=gpt-image-2
-CREATOMATE_TEMPLATE_ID=<template ID>
 GOOGLE_SHEET_ID=<spreadsheet ID>
 GOOGLE_SHEET_TAB=Queue
 YOUTUBE_REDIRECT_URI=http://localhost:3000/oauth2callback
 YOUTUBE_PRIVACY_STATUS=private
 YOUTUBE_CATEGORY_ID=28
-STORAGE_REGION=auto
-STORAGE_ENDPOINT=<S3-compatible endpoint>
-STORAGE_BUCKET=<bucket>
-STORAGE_PUBLIC_URL=<public bucket URL>
 MAX_JOBS_PER_RUN=1
 ```
 
