@@ -4,7 +4,7 @@ import { z } from "zod";
 const schema = z.object({
   FISH_AUDIO_API_KEY: z.string().min(1),
   FISH_VOICE_ID: z.string().min(1),
-  OPENAI_API_KEY: z.string().min(1),
+  OPENAI_API_KEY: z.string().optional().default(""),
   OPENAI_SCRIPT_MODEL: z.string().default("gpt-5.5"),
   OPENAI_IMAGE_MODEL: z.string().default("gpt-image-2"),
   GOOGLE_SHEET_ID: z.string().min(1),
